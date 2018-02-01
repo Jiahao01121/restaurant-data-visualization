@@ -1,0 +1,408 @@
+
+<head>
+  <script src="mousetrap.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="render-queue.js"></script>
+  <script src="underscore-min.js"></script>
+  <style>
+  /* tips : if want to set top percentage, it have to have percentage all the way top down*/
+  body {
+      width: 100%;
+      height: 100%;
+      margin: 0 0 0 auto;
+      background-color: #1b1f3a;
+      /*max-width: 800px;*/
+  }
+  .nav {
+    width:3%;
+    height:100%;
+    background:black;
+    position: fixed;
+    right:0;
+  }
+  .header_container {
+    /*margin-top: 10px;*/
+    right: 6%;
+    position: fixed;
+    z-index: 1;
+  }
+  #logo {
+    font-size: 3em;
+    color: white;
+  }
+
+  .detail_container {
+    /*line-height: 0px;*/
+    height: 100%;
+    /*margin-right:6%;*/
+  }
+  .detail_container p {
+    position: relative;
+    color: white;
+    /*opacity:0;*/
+    z-index: 1;
+    top:45%;
+    max-width: 500px;
+
+    right: 6%;
+    text-align: right;
+    float: right;
+  }
+  .detail_container img {
+    width: 312;
+    height: 226;
+    position: absolute;
+    margin-top: 7%;
+    padding-bottom: 2%;
+    right: 6%;
+  }
+  canvas {
+    padding:0;
+    margin: 0;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    z-index:0;
+  }
+  div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 60px;
+    height: 28px;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+  }
+  </style>
+</head>
+
+<body>
+  <div class="nav"></div>
+  <div class="header_container">
+    <h1 id="logo">The price of conveinence</h1>
+  </div>
+  <div class="detail_container">
+    <img src="map-01.png">
+    <p> dark Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla luctus aliquam dolor, eu lacinia lorem placerat vulputate. Duis felis orci, pulvinar id metus ut, rutrum luctus orci. Cras porttitor imperdiet nunc, at ultricies tellus laoreet sit amet. Sed auctor cursus massa at porta. Integer ligula ipsum, tristique sit amet orci vel, viverra egestas ligula. Curabitur vehicula tellus neque, ac ornare ex malesuada et. In vitae convallis lacus. Aliquam erat volutpat. Suspendisse ac imperdiet turpis. Aenean finibus sollicitudin eros pharetra congue. Duis ornare egestas augue ut luctus. Proin blandit quam nec lacus varius commodo et a urna. Ut id ornare felis, eget fermentum sapien.
+
+</p>
+  </div>
+
+  <script>
+  javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='//rawgit.com/mrdoob/stats.js/master/build/stats.min.js';document.head.appendChild(script);})()
+
+  d3.select('body')
+  	.append('canvas')
+  	.attr('height',window.innerHeight)
+    .attr('width',window.innerWidth)
+  var canvas = document.querySelector('canvas'),
+      context = canvas.getContext('2d'),
+      width = canvas.width,
+      height = canvas.height,
+      transform = d3.zoomIdentity;
+
+  var node_pointed,
+      link_associated = [],
+      node_associated = [],
+      node_for_text = {id : "arbitrary"},
+      node_pointed_previous ={id:"arbitrary"};
+      node_associated_previous = [{id:'arbitrary'}];
+  var simulation = d3.forceSimulation()
+      .force('link',d3.forceLink().id(function(d){return d.id;}))
+      .force('charge',d3.forceManyBody().strength(-140).distanceMax(202).distanceMin(function(d){ return d3.randomUniform(3000)()}))    //d3.randomUniform(3000)()
+      .force('center',d3.forceCenter(-(width*0.05),height *1.65/ 3))
+      .force('forceX',d3.forceX(1000).x(1000))
+      .force('forceY',d3.forceY(1000))
+      .force('Collision',d3.forceCollide(
+          function(d){
+            if(d.gr == "v"){
+              return 20
+            }else{ return null}
+          }
+      ))
+      .alpha(.05)
+      .velocityDecay(0.2)
+      // .stop();
+
+  var tooltip = d3.select("body").append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+  d3.queue()
+  .defer(d3.json, 'n_l_v2.json')
+  .defer(d3.json, 'mar_25_all_mahat_5233outOf9881.json')
+  .defer(d3.json, 'code_correspond_description.json')
+  .await(function(err, graph, data, code_correspond_description){ if(err) throw err;
+                zoom = d3.zoom()
+                    .scaleExtent([.4,.8])
+                    .on('zoom',function (){
+                      transform = d3.event.transform;
+                      ticked();
+                    });
+                zoom.scaleTo(  d3.select(canvas), .00066*height +.1);
+
+                simulation
+                    .nodes(graph.nodes)
+                    .on('tick',ticked);
+                simulation.force('link')
+                    .links(graph.links)
+                    .distance(800);
+
+                can_selec = d3.select(canvas)
+                    .call(d3.drag()
+                        .container(canvas)
+                        .subject()
+                    )
+                    .call(zoom).on("wheel.zoom", null)
+                    .on('mousemove',mv)
+
+                Mousetrap.bind(['=', '+', 'pageup'], function() {
+                  can_selec
+                  .call(zoom)
+                  .on("wheel.zoom", null)
+                  .call(zoom.scaleTo, transform.k +=.05)
+                });
+                Mousetrap.bind(['-', 'pagedown'], function() {
+                  can_selec
+                  .call(zoom)
+                  .on("wheel.zoom", null)
+                  .call(zoom.scaleTo, transform.k -=.1);
+                });
+            /************************************************************************************************/
+
+                  // for (var i = 0, n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay())); i < n; ++i) {
+                  //     simulation.tick();
+                  //     console.log(i);
+                  // }
+                  // ticked();
+
+                function mv(){
+                  var p = d3.mouse(this); //coordinates
+                  var x = d3.event.x;
+                  // console.log(transform.applyX(p[0]));
+                  // console.log(transform);
+                  (function create_node_link_associated(){
+                    //variable for pass nodes and related links to fc ticked(); to update and draw those stuff.
+                    node_pointed = simulation.find(transform.invertX(p[0]), transform.invertY(p[1]));
+                    link_associated = [];
+                    node_associated = [];
+                    //pushes link_associated & node_associated.
+                    graph.links.forEach(function(d){
+                        if(
+                          d.source.index == node_pointed.index || d.target.index == node_pointed.index
+                          ){
+                            link_associated.push(d);
+                            graph.nodes.forEach(function(d2){
+                                if(d2.index == d.source.index || d2.index == d.target.index){
+                                   node_associated.push(d2);
+                                };
+                            });
+                        };
+                    });
+                    node_associated = removeDuplicates(node_associated,"id");
+                  })();
+
+
+
+
+
+                  if(node_pointed !== undefined) {
+                    ticked();
+                    if(node_pointed.gr){
+                        if(node_pointed_previous.id !== node_pointed.id){
+                          node_pointed_previous = node_pointed;
+                          if(node_pointed.gr =='v'){
+                          draw_vio_tooltip(node_pointed);
+                          }
+                          if(node_pointed.gr =='r'){
+                            draw_r_tooltip()
+                          }
+                        }
+                    }
+                  }
+
+                  //add text
+                  if(!isNaN(+node_pointed.id)){
+                    if(node_for_text.id !== +node_pointed.id){
+                      node_for_text = data[+node_pointed.id];
+                      jquery();
+                    }
+                  }
+                  function jquery(){
+                    d3.select('p').transition().duration(10/2)
+                                      .style("opacity", 0)
+                                      .transition().duration(1000/2)
+                                      .style("opacity", 1)
+                    $('p').text(node_for_text.name)
+                  }
+                  } //mv()
+
+                function ticked(){
+                    context.save();
+                    context.clearRect(0,0,width,height);
+                    context.translate(transform.x,transform.y);
+                    context.scale(transform.k,transform.k);
+                    //interaction link
+                    if(link_associated.length !== 0){
+                        context.beginPath();
+                        link_associated.forEach(drawLink)
+                        context.strokeStyle = "rgba(151, 10, 198,0.575)";
+                        context.stroke();
+                    }
+                    //central vio point
+                    context.beginPath();
+                    graph.nodes.forEach(drawNode_inspc);
+                    context.fillStyle = '#970ac6';
+                    context.fill();
+                    context.strokeStyle = '#1b1f3a';
+                    context.lineWidth =.5;
+                    context.stroke();
+                    //restaurant point
+                    context.beginPath();
+                    graph.nodes.forEach(drawNode_restaurant_A);
+                    context.fillStyle = '#cd772c'
+                    context.fill();
+                    context.strokeStyle = '#1b1f3a'
+                    context.stroke();
+
+                    context.beginPath();
+                    graph.nodes.forEach(drawNode_restaurant_B);
+                    context.fillStyle = '#297aef'
+                    context.fill();
+                    context.strokeStyle = '#1b1f3a'
+                    context.stroke();
+
+                    context.beginPath();
+                    graph.nodes.forEach(drawNode_restaurant_C);
+                    context.fillStyle = '#2aff50'
+                    context.fill();
+                    context.strokeStyle = '#1b1f3a'
+                    context.stroke();
+                    //interaction nodes
+                    if(node_pointed){
+                        context.beginPath();
+                        drawNode_interact(node_pointed)
+                    }
+                    if(node_associated.length !== 0){
+                        context.beginPath();
+                        node_associated.forEach(drawNode_interact);
+                        context.fillStyle = '#ffffff';  //"#09f2bf"
+                        context.fill();
+                    }
+                    context.restore();
+                }
+
+                function draw_vio_tooltip(d){
+                    tooltip.transition().duration(10/2)
+                          .style("opacity", 0)
+                          .transition().duration(1000/2)
+                          .style("opacity", 1)
+
+                    tooltip.html("AAA"+d.id)
+                          .style("left", transform.applyX(d.x) + "px")
+                          .style("top", transform.applyY(d.y) + "px");
+              } //draw_vio_tooltip
+
+                function draw_r_tooltip(){
+                    tooltip.transition()
+                       .duration(200)
+                       .style("opacity", 0);
+
+                    if(node_associated_previous[0].id !== node_associated[0].id){
+                        node_associated_previous = node_associated;
+                        var arr_for_div = [];
+                        node_associated_previous.forEach(function(d){
+                          if(d.gr == 'v'){
+                              var a = d3.select("body").append("div")
+                                 .attr("class", "tooltip")
+                                 .style("opacity", 0);
+                              a.transition().duration(10/2)
+                                    .style("opacity", 0)
+                                    .transition().duration(1000/2)
+                                    .style("opacity", 1)
+                              a.html("AAA")
+                                    .style("left", transform.applyX(d.x) + "px")
+                                    .style("top", transform.applyY(d.y) + "px");
+                              arr_for_div.push(a);
+                      }
+                    });
+                  }
+
+                  if(node_associated_previous[0].id == node_associated[0].id){
+                        arr_for_div.forEach(function(d){
+                          d.remove()
+                        })
+                  }
+                }
+  }) // queue
+
+
+  /********************************************/
+      function drawLink(d){
+        context.moveTo(d.source.x, d.source.y);
+        context.lineTo(d.target.x, d.target.y);
+      }
+      function drawNode_inspc(d) {
+        if(d.gr == 'v' ){
+          context.moveTo(d.x + 10, d.y);
+          context.arc(d.x, d.y, 10, 0, 2 * Math.PI);
+        }
+      }
+      function drawNode_restaurant_A(d) {
+        if(d.gr == 'r' ){
+          if(d.gd >0 && d.gd <13){
+              context.moveTo(d.x + 3, d.y);
+              context.arc(d.x, d.y, 3, 0, 2 * Math.PI);
+          }
+        }
+      }
+      function drawNode_restaurant_B(d) {
+        if(d.gr == 'r' ){
+          if(d.gd >13 && d.gd <27){
+              context.moveTo(d.x + 3, d.y);
+              context.arc(d.x, d.y, 3, 0, 2 * Math.PI);
+          }
+        }
+      }
+      function drawNode_restaurant_C(d) {
+        if(d.gr == 'r' ){
+          if(d.gd >27 ){
+              context.moveTo(d.x + 3, d.y);
+              context.arc(d.x, d.y, 3, 0, 2 * Math.PI);
+          }
+        }
+      }
+      function drawNode_interact(d) {
+        if(d.gr == 'r' ){
+          context.moveTo(d.x + 3, d.y);
+          context.arc(d.x, d.y, 3, 0, 2 * Math.PI);
+        }
+        if(d.gr == 'v' ) {
+          context.moveTo(d.x + 10, d.y);
+          context.arc(d.x, d.y, 10, 0, 2 * Math.PI);
+        }
+    }
+    function removeDuplicates(originalArray, prop) {
+       var newArray = [];
+       var lookupObject  = {};
+
+       for(var i in originalArray) {
+          lookupObject[originalArray[i][prop]] = originalArray[i];
+       }
+
+       for(i in lookupObject) {
+           newArray.push(lookupObject[i]);
+       }
+        return newArray;
+    }
+    var arr = removeDuplicates(arr, "source");
+    for (var iii in arr) {
+        links.push(arr[iii])
+    }
+  </script>
+
+</body>

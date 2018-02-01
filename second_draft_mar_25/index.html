@@ -1,0 +1,247 @@
+
+<head>
+  <title>NYC FOODIVERSE - a data visualization experiment about restaurant in NYC</title>
+
+  <meta property="og:url"           content="https://jiahao01121.github.io/Restaurant_data_viz/second_draft_mar_25/index.html" />
+ <meta property= 'og:type'        content="website" />
+ <meta property="og:title"         content="NYC FOODIVERSE - a data visualization experiment about restaurant in NYC" />
+ <meta property="og:description"   content="aaaa" />
+ <meta property="og:image"         content="https://storage.googleapis.com/gweb-uniblog-publish-prod/static/blog/images/google-200x200.7714256da16f.png" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+  <script src="mousetrap.min.js"></script>
+  <script src="setImmediate.js"></script>
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="http://code.jquery.com/color/jquery.color-2.1.2.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="render-queue.js"></script>
+  <script src="underscore-min.js"></script>
+  <script src="d3-canvas-transition.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.0.0/fuse.js"></script>
+
+
+  <script src='https://api.mapbox.com/mapbox-gl-js/v0.35.1/mapbox-gl.js'></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v0.35.1/mapbox-gl.css' rel='stylesheet' />
+
+  <script src="http://cdn.jsdelivr.net/qtip2/3.0.3/jquery.qtip.min.js"></script>
+  <link rel="stylesheet" href="http://cdn.jsdelivr.net/qtip2/3.0.3/jquery.qtip.min.css"/>
+  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-90565447-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+
+<body>
+  <div id="fb-root"></div>
+  <script>(function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.9";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));</script>
+
+  <div id="intro_page">
+    <!-- <div id="intro_blocker_nav"></div> -->
+    <div id="intro_page_inner_text">
+      <p id="intro_main_title">NYC FOODIVERSE</p>
+      <p id="intro_title">nyc foodiverse is a data visualization
+experiment about inspection data and foursquare ratings for restaurants in nyc,
+brought to you by <a id="intro_my_website" href='https://willsu.myportfolio.com'>will su.</a></p>
+
+      <p id="intro_button">I'm hungry!</p>
+    </div>
+    <img src="assets/LOGO_MOTION-01.png" alt="tooltips" id='logo_01'>
+    <img src="assets/LOGO_MOTION-02.png" alt="tooltips" id='logo_02'>
+    <!-- <img src="assets/LOGO_MOTION-03.png" alt="tooltips" id='logo_03'> -->
+    <!-- <img src="assets/LOGO_MOTION -04.png" alt="tooltips" id='logo_04'> -->
+    <img src="assets/LOGO_MOTION-05.png" alt="tooltips" id='logo_05'>
+    <img src="assets/LOGO_MOTION-06.png" alt="tooltips" id='logo_06'>
+    <div id="tips_for_universe_container">
+      <p id="tips_for_universe">circles orbiting the sanitation categories are all* the restaurants in the Manhattan area. <br />circles in “the center of the FOODIVERSE” represent a total of 78 categories of sanitation problems </p>
+    </div>
+  </div>
+
+
+  <div id = "infoPanel_container">
+
+ <!-- <button class="test" >XXXXXX</button> -->
+ <!-- <button class="test_two" >XXXXXX</button> -->
+  <div class="slide">
+    <button class="popup_button">X</button>
+    <!-- restaurant info -->
+      <div class="detail_container">
+        <p id="infoPanel_vio_code"> </p>
+        <p id="infoPanel_vio_des"></p>
+        <p id="infoPanel_Data_name"></p>
+        <a target="_blank" href="a" id='restaurant_link_url'>
+        <img src="assets/link_button.png" alt="tooltips" id='restaurant_link'>
+        </a>
+        <p id="price_tier">
+          Price tier: unknown
+        </p>
+        <p id="likes">
+          likes: unknown
+        </p>
+      <hr id="hr_one" size="2" noshade color="white">
+
+      <div class="basic_info_detailed">
+        <p id="infoPanel_vio_analyze"> </p>
+        <p id="infoPanel_vio_analyze_num"> </p>
+        <p id="infoPanel_Location"></p>
+          <p id="infoPanel_Category"></p>
+          <p id="infoPanel_LastInspect"></p>
+      </div>
+      <hr id="hr_two" size="1" noshade color="white">
+      <div id="mapbox">
+        <div id="mapbox_blocker_top"></div>
+        <div id="mapbox_blocker"></div>
+        <div id="mapbox_blocker_right"></div>
+      </div>
+
+      </div>
+    <!-- <!~~ overflow panel ~~> -->
+    <div class="infoPanel_righthand_vio_rating">
+      <!-- mouseover violation -->
+      <div class='mousemover_violation'>
+        <h2 id="mousemover_violation_head">Restaurant list</h2>
+        <p id="mousemover_violation_subhead">Full list of Restaurant have this</br>sanitation problem.</p>
+        <div id="mousemover_violation_list_container">
+          <ol class="mousemover_violation_list">
+          </ol>
+          <button id="mousemover_violation_button">SHOW MORE</button>
+        </div>
+      </div>
+      <!-- violation -->
+      <div class="dark_side">
+      <h2 id="dark_side_head">Dark Side</h2>
+      <p id="dark_side_subhead">Data from NYC restaurant inspection,</br>shows the sanitation problem in this restaurant.</p>
+      <div id="dark_side_list_container">
+        <ol class="dark_side_list">
+        </ol>
+      </div>
+      </div>
+      <!-- fourSquare -->
+      <div class="rating">
+      <h2 id="dark_side_head">NewYorker’s Thoughts</h2>
+      <p id="dark_side_subhead">Data from Foursquare rating data.</br>shows the sanitation problem in this restaurant.</p>
+      <p id="rate_score">Rating:</p>
+
+      <div id="rating_score_block">
+        <i id="rating_score_text"></i>
+      </div>
+
+      <div id="rating_container">
+        <ol class="rating_list_positive"></ol>
+      </div>
+      <button id="positive_button">POSITIVE REVIEW KEYWORD</button>
+      <button id="meh_button">MEH REVIEW KEYWORD</button>
+      <button id="negative_button">NEGATIVE REVIEW KEYWORD</button>
+
+       </div>
+    </div>
+  </div>
+
+  </div>
+  <!-- slide end -->
+  <div class='mask-on'></div>
+  <img src="assets/tooltip_wheel.png" alt="tooltips" id='tooltip_wheel'>
+  <img src="assets/tooltip_plot_grade_rating.png" alt="tooltips" id='tooltip_plot_grade_rating'>
+  <img src="assets/restaurant_search.png" alt="tooltips" id='tooltip_search'>
+  <img src="assets/inspect_time_tooltips.png" alt="tooltips" id='tooltip_inspect_time'>
+
+  <!-- nav start -->
+
+  <div id = "nav_container">
+
+    <div id ="nav_bar">
+      <h1 id='header'>NYC FOODIVERSE</h1>
+      <form id="content">
+        <input type="text" name="input" class="input" autocomplete="off">
+        <button type="reset" class="search" id="search_button"></button>
+        <div id="search_list_container" style="visibility: hidden">
+        <ul id="search_list">
+        </ul>
+        </div>
+      </form>
+
+      <div id="horizontal_header_container">
+        <h1 id='header_filter_univ'>FOODIVERSE</h1>
+        <h1 id='header_sorting'>GRAPH</h1>
+        <h1 id='header_MAP'>MAP</h1>
+      </div>
+
+
+      <div id="filtering_univ_container">
+        <span class="filter test_two">
+          <p>
+            <a id='plot_inspection'>FOODIVERSE</a>
+          </p>
+        </span>
+        <span class="filter last_inspection_wheel">
+          <p>
+            <a id='last_inspection_wheel_inner' >Last-time inspection</a>
+          </p>
+        </span>
+        <!-- fake start -->
+        <span class="filter panding_2">
+          <p>
+            <a id='panding_2_1'>Neighborhood</a>
+          </p>
+        </span>
+        <!-- fake end -->
+      </div>
+
+
+
+      <div id="GRAPH_CONTAINER">
+        <h2 id="x_axis_head">X Axis</h2>
+        <div id="sorting_container_x">
+          <span class="filter plot test">
+            <p>
+              <a id='plot_rating'>Sanitation Score</a>
+            </p>
+          </span>
+        </div>
+        <h2 id="y_axis_head">Y Axis</h2>
+        <div id ="sorting_container_y">
+          <span class="filter plot following_test">
+            <p>
+              <a id='plot_rating_following'>Foursquare Rating</a>
+            </p>
+          </span>
+          <span class="filter test_three">
+            <p>
+              <a id='plot_price'>Price Tier</a>
+            </p>
+          </span>
+        </div>
+    </div>
+
+      <div id ="map_view_container">
+        <span class="filter map_plot">
+          <p>
+            <a id='map_plot_inner'>MAP</a>
+          </p>
+        </span>
+
+      <!-- <div class="fb-like" data-href="https://jiahao01121.github.io/Restaurant_data_viz/second_draft_mar_25/index.html" data-width="50px" data-layout="button_count" data-action="like" data-size="small" data-show-faces="true" data-share="true"></div> -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- html end -->
+
+  <script src="restaurant_wheel.js"></script>
+  <script src="https://infobawards.s3.amazonaws.com/2017/sY4KNmNfUv.js" id="iib-awards-badge" data-project="2348"></script>
+</body>
